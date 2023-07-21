@@ -1,107 +1,59 @@
-# Copyright (c) HashiCorp, Inc.
-# SPDX-License-Identifier: MPL-2.0
-
 provider "aws" {
-  region = var.aws_region
+
+region = "us-east-1"
 }
 
-data "aws_availability_zones" "available" {
-  state = "available"
+locals {
+
+USA  = {
+
+name = "usa-project"
+owner = "kumara"
+ }
 }
 
-module "vpc" {
-  source  = "terraform-aws-modules/vpc/aws"
-  version = "3.19.0"
-
-  cidr = var.vpc_cidr_block
-
-  azs             = data.aws_availability_zones.available.names
-  private_subnets = slice(var.private_subnet_cidr_blocks, 0, 2)
-  public_subnets  = slice(var.public_subnet_cidr_blocks, 0, 2)
-
-  enable_nat_gateway = true
-  enable_vpn_gateway = false
+locals {
+  UK  = {
+  Name = "UK-Project"
+  owner = " kumara"
+ }
 }
 
-module "app_security_group" {
-  source  = "terraform-aws-modules/security-group/aws//modules/web"
-  version = "4.17.1"
-
-  name        = "web-server-sg"
-  description = "Security group for web-servers with HTTP ports open within VPC"
-  vpc_id      = module.vpc.vpc_id
-
-  ingress_cidr_blocks = module.vpc.public_subnets_cidr_blocks
+resource "aws_instance" "web" {
+        instance_type   = "t2.micro"
+        ami             = "ami-07dff4fe919dee33e"
+        tags            = local.USA
 }
 
-module "lb_security_group" {
-  source  = "terraform-aws-modules/security-group/aws//modules/web"
-  version = "4.17.1"
+resource "aws_vpc" "VPC" {
 
-  name        = "lb-sg-project-alpha-dev"
-  description = "Security group for load balancer with HTTP ports open within VPC"
-  vpc_id      = module.vpc.vpc_id
-
-  ingress_cidr_blocks = ["0.0.0.0/0"]
+        cidr_block      = "10.0.0.0/16"
+        instance_tenancy = "default"
+        tags            = local.USA
 }
 
-resource "random_string" "lb_id" {
-  length  = 3
-  special = false
+resource "aws_ebs_volume" "vol1" {
+availability_zone       = "us-east-1a"
+size                    = 2
+tags                    = local.USA
 }
 
-module "elb_http" {
-  source  = "terraform-aws-modules/elb/aws"
-  version = "4.0.1"
 
-  # Ensure load balancer name is unique
-  name = "lb-${random_string.lb_id.result}-project-alpha-dev"
-
-  internal = false
-
-  security_groups = [module.lb_security_group.security_group_id]
-  subnets         = module.vpc.public_subnets
-
-  number_of_instances = length(module.ec2_instances.instance_ids)
-  instances           = module.ec2_instances.instance_ids
-
-  listener = [{
-    instance_port     = "80"
-    instance_protocol = "HTTP"
-    lb_port           = "80"
-    lb_protocol       = "HTTP"
-  }]
-
-  health_check = {
-    target              = "HTTP:80/index.html"
-    interval            = 10
-    healthy_threshold   = 3
-    unhealthy_threshold = 10
-    timeout             = 5
-  }
+resource "aws_instance" "webuk" {
+        instance_type   = "t2.micro"
+        ami             = "ami-07dff4fe919dee33e"
+        tags            = local.UK
 }
 
-module "ec2_instances" {
-  source = "./modules/aws-instance"
+resource "aws_vpc" "VPCUK" {
 
-  instance_count     = var.instances_per_subnet * length(module.vpc.private_subnets)
-  instance_type      = var.instance_type
-  subnet_ids         = module.vpc.private_subnets[*]
-  security_group_ids = [module.app_security_group.security_group_id]
+        cidr_block      = "10.0.0.0/16"
+        instance_tenancy = "default"
+        tags            = local.UK
 }
 
-resource "aws_db_subnet_group" "private" {
-  subnet_ids = module.vpc.private_subnets
-}
-
-resource "aws_db_instance" "database" {
-  allocated_storage = 5
-  engine            = "mysql"
-  instance_class    = "db.t2.micro"
-  username          = var.db_username
-  password          = var.db_password
-
-  db_subnet_group_name = aws_db_subnet_group.private.name
-
-  skip_final_snapshot = true
+resource "aws_ebs_volume" "vol2" {
+availability_zone       = "us-east-1a"
+size                    = 2
+tags                    = local.UK
 }
