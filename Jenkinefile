@@ -1,0 +1,26 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+            git branch: 'main', url: 'https://github.com/kumarcc1/Terraform-with-jenkins.git'            
+
+          }
+        }
+        
+        stage ("terraform init") {
+            steps {
+                sh ('terraform init') 
+            }
+        }
+        
+        stage ("terraform Action") {
+            steps {
+               
+                sh ('terraform validate')
+                sh ('terraform plan')
+           }
+        }
+    }
+}
