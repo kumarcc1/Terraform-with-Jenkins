@@ -9,18 +9,26 @@ pipeline {
           }
         }
         
-        stage ("terraform init") {
+        stage ("Initialize Terraform") {
             steps {
                 sh ('terraform init') 
             }
         }
         
-        stage ("terraform Action") {
+        stage ("validate the syntax ") {
             steps {
-               
                 sh ('terraform validate')
-                sh ('terraform plan')
            }
+        }
+        stage ('Terraform DryRun') {
+            steps{
+                sh ('terraform plan')
+            }
+        }
+        stage ('Infra Ready') {
+            steps{
+                sh ('terraform apply')
+            }
         }
     }
 }
