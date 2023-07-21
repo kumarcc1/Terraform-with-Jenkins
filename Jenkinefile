@@ -26,8 +26,21 @@ pipeline {
             }
         }
         stage ('Infra Ready') {
+            input {
+                message "Should we continue?"
+                ok "Yes"
+            }
             steps{
-                sh ('terraform apply')
+                sh ('terraform apply --auto-approve')
+            }
+        }
+        stage ('Destroy Infra') {
+            input {
+                message "Should we continue?"
+                ok "Yes"
+            }
+            steps{
+                sh ('terraform destroy --auto-approve')
             }
         }
     }
