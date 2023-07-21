@@ -3,12 +3,12 @@ output "instance_ip" {
 }
 
 output "instance_arn" {
-  value = aws_instance.local.arn
+  value = aws_instance.sanvi.arn
   sensitive = true
 }
 
 output "instance_ami" {
-  value = aws_instance.local.ami
+  value = aws_instance.sanvi.ami
 }
 
 output "vpc_cidr" {
